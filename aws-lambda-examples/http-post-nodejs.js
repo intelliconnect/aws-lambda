@@ -23,6 +23,7 @@ const post = (path, payload) => new Promise((resolve, reject) => {
 
 // Example usage
 exports.handler = async (event, context) => new Promise( async (resolve, reject) => {
-    const token = await post('/auth/login', event); //event will be the payload required to send
+    // const token = await post('/auth/login', event); //event will be the payload required to send
+    const token = 1234;
     console.log(token)
 })
