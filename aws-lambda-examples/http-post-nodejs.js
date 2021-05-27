@@ -1,15 +1,7 @@
-const https = require('https'); // or https 
+const https = require('https');
 
-const defaultOptions = {
-    host: 'example.com',
-    port: 443, // or 80 for http
-    headers: {
-        'Content-Type': 'application/json',
-    }
-}
-
-const post = (path, payload) => new Promise((resolve, reject) => {
-    const options = { ...defaultOptions, path, method: 'POST' };
+const getStatus = (defaultOptions, path, payload) => new Promise((resolve, reject) => {
+    const options = { ...defaultOptions, path, method: 'GET' };
     const req = https.request(options, res => {
         let buffer = "";
         res.on('data', chunk => buffer += chunk)
@@ -20,10 +12,22 @@ const post = (path, payload) => new Promise((resolve, reject) => {
     req.end();
 })
 
+exports.handler = async (event) => {
+    // TODO 
+    const defaultOptions = {
+        host: event._hostname, //_hostname : example.com, passed from event as a parameter
+        port: 443, // or 80 for http
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }
 
-// Example usage
-exports.handler = async (event, context) => new Promise( async (resolve, reject) => {
-    // const token = await post('/auth/login', event); //event will be the payload required to send
-    const token = 1234;
-    console.log(token)
-})
+    var status_info = await getStatus(defaultOptions,event._pathname,''); //_pathname : /users/add, passed from event as a parameter
+    
+    // TODO implement
+    const response = {
+        statusCode: 200,
+        body: JSON.stringify(status_info),
+    };
+    return response;
+};

@@ -8,53 +8,32 @@ from email.mime.application import MIMEApplication
 
 def lambda_handler(event, context):
     # TODO implement
-    #1 Read the input parameters
-    firstName = event['firstname']
-    lastName = event['lastname']
-    emailID    = event['email']
-    token   = event['tokenDetails']['token']
-    tokenfor = event['tokenDetails']['tokenfor']
-        
+    
     # Replace sender@example.com with your "From" address.
-    # This address must be verified with Amazon SES.
-    SENDER = "Millennial Weddings<info@millennialweddings.in>"
+    # This address must be verified with Amazon SES. Add here the email address you verified in step 4
+    SENDER = "user@example.com"
     
     # Replace recipient@example.com with a "To" address. If your account 
     # is still in the sandbox, this address must be verified.
-    RECIPIENT = emailID
+    #RECIPIENT = "recipient@example.com"
     
     # Specify a configuration set. If you do not want to use a configuration
     # set, comment the following variable, and the 
     # ConfigurationSetName=CONFIGURATION_SET argument below.
-    CONFIGURATION_SET = "mw-pwa-transactional"
+    #CONFIGURATION_SET = ""
     
     # If necessary, replace us-west-2 with the AWS Region you're using for Amazon SES.
-    AWS_REGION = "ap-south-1"
+    AWS_REGION = "<region>"
     
     # The subject line for the email.
-    SUBJECT = firstName +", Your Millennial Weddings registration email token"
-    
-    if tokenfor == "forgotpassword" :
-        SUBJECT = firstName +", Your Millennial Weddings forgot password email token"
-    
+    SUBJECT = "Sample Test Email using Lambda function and SES"
     
     # The full path to the file that will be attached to the email.
-    #ATTACHMENT = "path/to/customers-to-contact.xlsx"
+    #ATTACHMENT = ""
     
     # The email body for recipients with non-HTML email clients.
-    BODY_TEXT = "Hello " + firstName +",\r\nPlease note your Email/SMS token as "+ str(token) + ". Token is valid for 5 minutes\r\n \r\nWe are excited to see you consider us to find your perfect match.\r\n \r\nTeam Millennial Weddings \r\n \r\n \r\n \r\n \r\n \r\n \r\n DISCLAIMER : This e-mail is confidential. It may also be legally privileged. If you are not the addressee you may not copy, forward, disclose or use any part of it. Internet communications cannot be guaranteed to be timely secure, error or virus-free. The sender does not accept liability for any errors or omissions. We maintain strict security standards and procedures to prevent unauthorized access to information about you"
-    
-    # The HTML body of the email.
-    #BODY_HTML = """\
-    #<html>
-    #<head></head>
-    #<body>
-    #<h1>Hello!</h1>
-    #<p>Please see the attached file for a list of customers to contact.</p>
-    #</body>
-    #</html>
-    #"""
-    
+    BODY_TEXT = "Hello,\r\nThis is a sample email to test working of Amazon SES using Lambda function"
+        
     # The character encoding for the email.
     CHARSET = "utf-8"
     
@@ -66,7 +45,8 @@ def lambda_handler(event, context):
     # Add subject, from and to lines.
     msg['Subject'] = SUBJECT 
     msg['From'] = SENDER 
-    msg['To'] = RECIPIENT
+    msg['To'] = 'user1@example.com'
+    msg['CC'] = 'user2@example.com'
     
     # Create a multipart/alternative child container.
     msg_body = MIMEMultipart('alternative')
@@ -100,55 +80,28 @@ def lambda_handler(event, context):
         response = client.send_raw_email(
             Source=SENDER,
             Destinations=[
-                RECIPIENT
+                #RECIPIENT
+                msg['To'],msg['CC'],msg['BCC']
             ],
             RawMessage={
                 'Data':msg.as_string(),
             },
-            ConfigurationSetName=CONFIGURATION_SET
+            #ConfigurationSetName=CONFIGURATION_SET
         )
     
     # Display an error if something goes wrong.	
     except ClientError as e:
         print(e.response['Error']['Message'])
+        response = {
+            'statusCode': 500,
+            'message': 'Email Not Sent, '+e.response['Error']['Message']
+        }
     else:
         print("Email sent! Message ID:"),
         print(response['MessageId'])
+        response = {
+            'statusCode': 200,
+            'message': 'Email Sent'
+        }
     
-    
-    return {
-        'statusCode': 200,
-        'message': 'Email Sent'
-    }
-
-# For this Lambda function to work, we need to set access permissions to send Email
-# For that we while creating lambda function, the role gets created, we can edit that role and edit exiting policy to this : 
-
-# {
-#     "Version": "2012-10-17",
-#     "Statement": [
-#         {
-#             "Effect": "Allow",
-#             "Action": "logs:CreateLogGroup",
-#             "Resource": "arn:aws:logs:<REGION>:<ACCOUNT_ID>:*"
-#         },
-#         {
-#             "Effect": "Allow",
-#             "Action": [
-#                 "logs:CreateLogStream",
-#                 "logs:PutLogEvents"
-#             ],
-#             "Resource": [
-#                 "arn:aws:logs:<REGION>:<ACCOUNT_ID>:log-group:/aws/lambda/p-state-1-sendTokenEmail:*"
-#             ]
-#         },
-#         {
-#             "Effect": "Allow",
-#             "Action": [
-#                 "ses:SendEmail",
-#                 "ses:SendRawEmail"
-#             ],
-#             "Resource": "*"
-#         }
-#     ]
-# }
+    return response
